@@ -1,0 +1,32 @@
+kubectl apply -f namespace.yaml
+kubectl apply -f configmap.yaml
+kubectl apply -f deployment.yaml
+kubectl apply -f service.yaml
+
+
+kubectl get service image-runtime-scanner-service
+
+
+http://image-runtime-scanner-service.cloudanix.svc.cluster.local:8080
+
+URL="http://localhost:8080"
+URL="http://image-runtime-scanner-service.cloudanix.svc.cluster.local:8080"
+curl --location "$URL/scan" \
+--header 'Content-Type: application/json' \
+--data '{
+    "image": "python:3.7-alpine",
+    "apiEndpoint": "https://898e-2601-647-5f83-56c0-434-dc5e-f3e1-2376.ngrok-free.app/csimagescanningreceiver",
+    "authZToken": "auth-z-token-postman",
+    "identifier": "identifier-postman",
+    "env": "DEBUG"
+}'
+
+curl --location "$URL/scan" \
+--header 'Content-Type: application/json' \
+--data '{
+    "image": "python:3.9-alpine"
+}'
+
+
+
+kubectl delete -f namespace.yaml

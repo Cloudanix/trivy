@@ -39,3 +39,6 @@ dist
 # Signing
 gpg.key
 cmd/trivy/trivy
+
+image-scanner
+image-runtime-scanner

@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: image-runtime-scanner-deployment
+  namespace: cloudanix
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: image-runtime-scanner-app
+  template:
+    metadata:
+      labels:
+        app: image-runtime-scanner-app
+    spec:
+      containers:
+        - name: image-runtime-scanner
+          image: cloudanix/image-runtime-scanner:v0.0.1
+          ports:
+            - containerPort: 8080
+          env:
+            - name: API_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  name: image-runtime-scanner-configmap
+                  key: API_ENDPOINT
+            - name: AUTHZ_TOKEN
+              valueFrom:
+                configMapKeyRef:
+                  name: image-runtime-scanner-configmap
+                  key: AUTHZ_TOKEN
+            - name: IDENTIFIER
+              valueFrom:
+                configMapKeyRef:
+                  name: image-runtime-scanner-configmap
+                  key: IDENTIFIER
+            - name: ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: image-runtime-scanner-configmap
+                  key: ENV
