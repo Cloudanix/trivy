@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"slices"
+	"strings"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/samber/lo"
@@ -451,7 +453,53 @@ func Run(ctx context.Context, opts flag.Options, targetKind TargetKind) (err err
 		return xerrors.Errorf("report error: %w", err)
 	}
 
+	PublishReport(report, opts.ExportOptions)
+
+	// operation.ExitOnEOL(opts, report.Metadata)
+	// return operation.Exit(opts, report.Results.Failed())
 	return operation.Exit(opts, report.Results.Failed(), report.Metadata)
+
+	// return nil
+}
+
+func PublishReport(report types.Report, exportOpts flag.ExportOptions) {
+	if exportOpts.Env == "DEBUG" || os.Getenv("EXPORT_ENV") == "DEBUG" {
+		// fetch all env variables
+		for _, element := range os.Environ() {
+			variable := strings.Split(element, "=")
+			fmt.Println(variable[0], "=>", variable[1])
+		}
+	}
+
+	httpWriter := &pkgReport.HttpWriter{}
+
+	if _, ok := os.LookupEnv("API_ENDPOINT"); ok {
+		httpWriter.Mode = pkgReport.ModeEnv
+		httpWriter.ListenerUrl = os.Getenv("API_ENDPOINT")
+		httpWriter.AuthZToken = os.Getenv("AUTHZ_TOKEN")
+		httpWriter.AccountId = os.Getenv("IDENTIFIER")
+	}
+
+	if exportOpts.APIEndpoint != "DEFAULT_API_ENDPOINT" {
+		httpWriter.Mode = pkgReport.ModeArg
+		httpWriter.ListenerUrl = exportOpts.APIEndpoint
+		httpWriter.AuthZToken = exportOpts.AuthZToken
+		httpWriter.AccountId = exportOpts.Identifier
+	}
+
+	if _, ok := os.LookupEnv("RUN_AS_CI_PLUGIN"); ok {
+		httpWriter.Mode = pkgReport.ModeCI
+	}
+
+	if _, ok := os.LookupEnv("RUN_AS_RUNTIME_PLUGIN"); ok {
+		httpWriter.Mode = pkgReport.ModeRuntime
+	}
+
+	if httpWriter.Mode != "" {
+		if err := httpWriter.Write(report); err != nil {
+			log.Errorf("failed to write results: %w", err)
+		}
+	}
 }
 
 func disabledAnalyzers(opts flag.Options) []analyzer.Type {

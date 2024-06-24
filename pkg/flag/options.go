@@ -317,6 +317,7 @@ type Flags struct {
 	ScanFlagGroup          *ScanFlagGroup
 	SecretFlagGroup        *SecretFlagGroup
 	VulnerabilityFlagGroup *VulnerabilityFlagGroup
+	ExportFlagGroup        *ExportFlagGroup
 }
 
 // Options holds all the runtime configuration
@@ -340,6 +341,7 @@ type Options struct {
 	ScanOptions
 	SecretOptions
 	VulnerabilityOptions
+	ExportOptions
 
 	// Trivy's version, not populated via CLI flags
 	AppVersion string
@@ -542,6 +544,9 @@ func (f *Flags) groups() []FlagGroup {
 	if f.RepoFlagGroup != nil {
 		groups = append(groups, f.RepoFlagGroup)
 	}
+	if f.ExportFlagGroup != nil {
+		groups = append(groups, f.ExportFlagGroup)
+	}
 	return groups
 }
 
@@ -735,6 +740,13 @@ func (f *Flags) ToOptions(args []string) (Options, error) {
 		opts.VulnerabilityOptions, err = f.VulnerabilityFlagGroup.ToOptions()
 		if err != nil {
 			return Options{}, xerrors.Errorf("vulnerability flag error: %w", err)
+		}
+	}
+
+	if f.ExportFlagGroup != nil {
+		opts.ExportOptions, err = f.ExportFlagGroup.ToOptions(args)
+		if err != nil {
+			return Options{}, xerrors.Errorf("report flag error: %w", err)
 		}
 	}
 

@@ -132,6 +132,8 @@ require (
 	sigs.k8s.io/yaml v1.4.0
 )
 
+require gopkg.in/yaml.v2 v2.4.0
+
 require (
 	cloud.google.com/go v0.112.1 // indirect
 	cloud.google.com/go/compute/metadata v0.3.0 // indirect
@@ -365,7 +367,6 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/apiextensions-apiserver v0.30.0 // indirect
 	k8s.io/apimachinery v0.30.1 // indirect
 	k8s.io/apiserver v0.30.0 // indirect
