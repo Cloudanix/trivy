@@ -58,6 +58,30 @@ var (
 		Values:     xstrings.ToStringSlice(ftypes.AllImageSources),
 		Usage:      "image source(s) to use, in priority order",
 	}
+	APIEndpointFlag = Flag[string]{
+		Name:       "api-endpoint",
+		ConfigName: "image.api-endpoint",
+		Default:    "DEFAULT_API_ENDPOINT",
+		Usage:      "API Endpoint",
+	}
+	AuthZTokenFlag = Flag[string]{
+		Name:       "authz-token",
+		ConfigName: "export.authz-token",
+		Default:    "DEFAULT_AUTHORIZATION_TOKEN",
+		Usage:      "Authorization Token",
+	}
+	IdentifierFlag = Flag[string]{
+		Name:       "identifier",
+		ConfigName: "export.identifier",
+		Default:    "DEFAULT_IDENTIFIER",
+		Usage:      "Identifier",
+	}
+	EnvFlag = Flag[string]{
+		Name:       "env",
+		ConfigName: "export.env",
+		Default:    "LIVE",
+		Usage:      "Environment",
+	}
 )
 
 type ImageFlagGroup struct {
@@ -68,6 +92,10 @@ type ImageFlagGroup struct {
 	DockerHost          *Flag[string]
 	PodmanHost          *Flag[string]
 	ImageSources        *Flag[[]string]
+	APIEndpoint          *Flag[string]
+	AuthZToken          *Flag[string]
+	Identifier          *Flag[string]
+	Env          *Flag[string]
 }
 
 type ImageOptions struct {
@@ -78,6 +106,10 @@ type ImageOptions struct {
 	DockerHost          string
 	PodmanHost          string
 	ImageSources        ftypes.ImageSources
+	APIEndpoint          string
+	AuthZToken          string
+	Identifier          string
+	Env          string
 }
 
 func NewImageFlagGroup() *ImageFlagGroup {
@@ -89,6 +121,10 @@ func NewImageFlagGroup() *ImageFlagGroup {
 		DockerHost:          DockerHostFlag.Clone(),
 		PodmanHost:          PodmanHostFlag.Clone(),
 		ImageSources:        SourceFlag.Clone(),
+		APIEndpoint:          APIEndpointFlag.Clone(),
+		AuthZToken:          AuthZTokenFlag.Clone(),
+		Identifier:          IdentifierFlag.Clone(),
+		Env:          EnvFlag.Clone(),
 	}
 }
 
@@ -105,6 +141,10 @@ func (f *ImageFlagGroup) Flags() []Flagger {
 		f.DockerHost,
 		f.PodmanHost,
 		f.ImageSources,
+		f.APIEndpoint,
+		f.AuthZToken,
+		f.Identifier,
+		f.Env,
 	}
 }
 
@@ -133,5 +173,9 @@ func (f *ImageFlagGroup) ToOptions() (ImageOptions, error) {
 		DockerHost:          f.DockerHost.Value(),
 		PodmanHost:          f.PodmanHost.Value(),
 		ImageSources:        xstrings.ToTSlice[ftypes.ImageSource](f.ImageSources.Value()),
+		APIEndpoint: f.APIEndpoint.Value(),
+		AuthZToken: f.AuthZToken.Value(),
+		Identifier: f.Identifier.Value(),
+		Env: f.Env.Value(),
 	}, nil
 }

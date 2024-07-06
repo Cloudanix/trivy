@@ -7,27 +7,27 @@ package flag
 //	identifier: IDENTIFIER
 //	env: LIVE | DEBUG
 var (
-	APIEndpointFlag = Flag[string]{
+	APIEndpointFlag1 = Flag[string]{
 		Name:       "api-endpoint",
-		ConfigName: "api-endpoint",
+		ConfigName: "image.api-endpoint",
 		Default:    "DEFAULT_API_ENDPOINT",
 		Usage:      "API Endpoint",
 	}
-	AuthZTokenFlag = Flag[string]{
+	AuthZTokenFlag1 = Flag[string]{
 		Name:       "authz-token",
-		ConfigName: "authz-token",
+		ConfigName: "export.authz-token",
 		Default:    "DEFAULT_AUTHORIZATION_TOKEN",
 		Usage:      "Authorization Token",
 	}
-	IdentifierFlag = Flag[string]{
+	IdentifierFlag1 = Flag[string]{
 		Name:       "identifier",
-		ConfigName: "identifier",
+		ConfigName: "export.identifier",
 		Default:    "DEFAULT_IDENTIFIER",
 		Usage:      "Identifier",
 	}
-	EnvFlag = Flag[string]{
+	EnvFlag1 = Flag[string]{
 		Name:       "env",
-		ConfigName: "env",
+		ConfigName: "export.env",
 		Default:    "LIVE",
 		Usage:      "Environment",
 	}

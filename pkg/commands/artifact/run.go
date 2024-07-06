@@ -393,7 +393,8 @@ func Run(ctx context.Context, opts flag.Options, targetKind TargetKind) (err err
 		return xerrors.Errorf("report error: %w", err)
 	}
 
-	PublishReport(report, opts.ExportOptions)
+	// PublishReport(report, opts.ExportOptions)
+	PublishReport(report, opts.ImageOptions)
 
 	// operation.ExitOnEOL(opts, report.Metadata)
 	// return operation.Exit(opts, report.Results.Failed())
@@ -402,8 +403,8 @@ func Run(ctx context.Context, opts flag.Options, targetKind TargetKind) (err err
 	// return nil
 }
 
-func PublishReport(report types.Report, exportOpts flag.ExportOptions) {
-	if exportOpts.Env == "DEBUG" || os.Getenv("EXPORT_ENV") == "DEBUG" {
+func PublishReport(report types.Report, imageOpts flag.ImageOptions) {
+	if imageOpts.Env == "DEBUG" || os.Getenv("EXPORT_ENV") == "DEBUG" {
 		// fetch all env variables
 		for _, element := range os.Environ() {
 			variable := strings.Split(element, "=")
@@ -420,11 +421,11 @@ func PublishReport(report types.Report, exportOpts flag.ExportOptions) {
 		httpWriter.AccountId = os.Getenv("IDENTIFIER")
 	}
 
-	if exportOpts.APIEndpoint != "DEFAULT_API_ENDPOINT" {
+	if imageOpts.APIEndpoint != "DEFAULT_API_ENDPOINT" {
 		httpWriter.Mode = pkgReport.ModeArg
-		httpWriter.ListenerUrl = exportOpts.APIEndpoint
-		httpWriter.AuthZToken = exportOpts.AuthZToken
-		httpWriter.AccountId = exportOpts.Identifier
+		httpWriter.ListenerUrl = imageOpts.APIEndpoint
+		httpWriter.AuthZToken = imageOpts.AuthZToken
+		httpWriter.AccountId = imageOpts.Identifier
 	}
 
 	if _, ok := os.LookupEnv("RUN_AS_CI_PLUGIN"); ok {

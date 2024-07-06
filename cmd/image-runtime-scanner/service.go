@@ -63,7 +63,6 @@ func scanImage(scanConfig ScanConfig) error {
 			NoProgress:         false, // To show/hide db download progress bar
 			DBRepository:       dbRepository,
 			JavaDBRepository:   javaDBRepository,
-			Light:              false,
 		},
 		ImageOptions: flag.ImageOptions{
 			Input:               "",

@@ -271,7 +271,7 @@ func NewImageCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		ScanFlagGroup:          scanFlagGroup,
 		SecretFlagGroup:        flag.NewSecretFlagGroup(),
 		VulnerabilityFlagGroup: flag.NewVulnerabilityFlagGroup(),
-		ExportFlagGroup:        flag.NewExportFlagGroup(),
+		// ExportFlagGroup:        flag.NewExportFlagGroup(),
 	}
 
 	cmd := &cobra.Command{
