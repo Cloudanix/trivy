@@ -73,6 +73,10 @@ func scanImage(scanConfig ScanConfig) error {
 			},
 			DockerHost:   "",
 			ImageSources: fTypes.AllImageSources,
+			APIEndpoint: scanConfig.APIEndpoint,
+			AuthZToken:  scanConfig.AuthZToken,
+			Identifier:  scanConfig.Identifier,
+			Env:         scanConfig.Env,
 		},
 		LicenseOptions: flag.LicenseOptions{
 			LicenseFull:            false,
@@ -121,12 +125,6 @@ func scanImage(scanConfig ScanConfig) error {
 				types.VulnTypeLibrary,
 			},
 		},
-		ExportOptions: flag.ExportOptions{
-			APIEndpoint: scanConfig.APIEndpoint,
-			AuthZToken:  scanConfig.AuthZToken,
-			Identifier:  scanConfig.Identifier,
-			Env:         scanConfig.Env,
-		},
 		AppVersion: version,
 	}
 
@@ -149,7 +147,7 @@ func scanImage(scanConfig ScanConfig) error {
 		return xerrors.Errorf("filter error: %w", err)
 	}
 
-	artifact.PublishReport(report, opts.ExportOptions)
+	artifact.PublishReport(report, opts.ImageOptions)
 
 	return nil
 }
