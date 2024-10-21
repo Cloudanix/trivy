@@ -40,5 +40,8 @@ dist
 gpg.key
 cmd/trivy/trivy
 
+# RPM
+*.rpm
+
 image-scanner
 image-runtime-scanner
