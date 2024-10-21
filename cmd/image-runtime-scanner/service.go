@@ -10,7 +10,6 @@ import (
 	"github.com/aquasecurity/trivy/pkg/commands/artifact"
 	fTypes "github.com/aquasecurity/trivy/pkg/fanal/types"
 	"github.com/aquasecurity/trivy/pkg/flag"
-	"github.com/aquasecurity/trivy/pkg/licensing"
 	"github.com/aquasecurity/trivy/pkg/types"
 	"github.com/google/go-containerregistry/pkg/name"
 
@@ -61,8 +60,8 @@ func scanImage(scanConfig ScanConfig) error {
 			DownloadJavaDBOnly: false,
 			SkipJavaDBUpdate:   false,
 			NoProgress:         false, // To show/hide db download progress bar
-			DBRepository:       dbRepository,
-			JavaDBRepository:   javaDBRepository,
+			DBRepositories:       []name.Reference{dbRepository},
+			JavaDBRepositories:   []name.Reference{javaDBRepository},
 		},
 		ImageOptions: flag.ImageOptions{
 			Input:               "",
@@ -83,14 +82,6 @@ func scanImage(scanConfig ScanConfig) error {
 			IgnoredLicenses:        nil,
 			LicenseConfidenceLevel: 0.9,
 			LicenseRiskThreshold:   0,
-			LicenseCategories: map[fTypes.LicenseCategory][]string{
-				fTypes.CategoryForbidden:    licensing.ForbiddenLicenses,
-				fTypes.CategoryNotice:       licensing.NoticeLicenses,
-				fTypes.CategoryPermissive:   licensing.PermissiveLicenses,
-				fTypes.CategoryReciprocal:   licensing.ReciprocalLicenses,
-				fTypes.CategoryRestricted:   licensing.RestrictedLicenses,
-				fTypes.CategoryUnencumbered: licensing.UnencumberedLicenses,
-			},
 		},
 		ReportOptions: flag.ReportOptions{
 			Format:         "json",
@@ -117,13 +108,6 @@ func scanImage(scanConfig ScanConfig) error {
 			FilePatterns:   nil,
 			SBOMSources:    nil,
 			RekorURL:       "https://rekor.sigstore.dev",
-			IncludeDevDeps: false,
-		},
-		VulnerabilityOptions: flag.VulnerabilityOptions{
-			VulnType: []string{
-				types.VulnTypeOS,
-				types.VulnTypeLibrary,
-			},
 		},
 		AppVersion: version,
 	}
