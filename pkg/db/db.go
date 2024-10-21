@@ -158,7 +158,20 @@ func (c *Client) Download(ctx context.Context, dst string, opt types.RegistryOpt
 		return xerrors.Errorf("OCI artifact error: %w", err)
 	}
 
-	if err = art.Download(ctx, dst, oci.DownloadOption{MediaType: dbMediaType}); err != nil {
+	maxRetryCount := 3
+	counter := 0
+	for counter < maxRetryCount {
+		log.Info(fmt.Sprintf("Downloading DB - Attempt %v", counter))
+		err = art.Download(ctx, dst, oci.DownloadOption{MediaType: dbMediaType})
+		if err == nil {
+			break
+		}
+
+		if counter < maxRetryCount {
+			counter += 1
+			continue
+		}
+
 		return xerrors.Errorf("database download error: %w", err)
 	}
 
