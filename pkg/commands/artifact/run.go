@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"net/http"
 	"os"
 	"slices"
 	"strings"
@@ -416,7 +417,48 @@ func Run(ctx context.Context, opts flag.Options, targetKind TargetKind) (err err
 		return xerrors.Errorf("post run error: %w", err)
 	}
 
+	PublishReport(report, opts.ImageOptions, opts.RemoteOptions.CustomHeaders)
+
 	return operation.Exit(opts, report.Results.Failed(), report.Metadata)
+}
+
+func PublishReport(report types.Report, imageOpts flag.ImageOptions, customHeaders http.Header) {
+	if imageOpts.Env == "DEBUG" || os.Getenv("EXPORT_ENV") == "DEBUG" {
+		for _, element := range os.Environ() {
+			variable := strings.Split(element, "=")
+			fmt.Println(variable[0], "=>", variable[1])
+		}
+	}
+
+	httpWriter := &pkgReport.HttpWriter{}
+
+	if _, ok := os.LookupEnv("API_ENDPOINT"); ok {
+		httpWriter.Mode = pkgReport.ModeEnv
+		httpWriter.ListenerUrl = os.Getenv("API_ENDPOINT")
+		httpWriter.AuthZToken = os.Getenv("AUTHZ_TOKEN")
+		httpWriter.AccountId = os.Getenv("IDENTIFIER")
+	}
+
+	if imageOpts.APIEndpoint != "DEFAULT_API_ENDPOINT" {
+		httpWriter.Mode = pkgReport.ModeArg
+		httpWriter.ListenerUrl = imageOpts.APIEndpoint
+		httpWriter.AuthZToken = imageOpts.AuthZToken
+		httpWriter.AccountId = imageOpts.Identifier
+	}
+
+	if _, ok := os.LookupEnv("RUN_AS_CI_PLUGIN"); ok {
+		httpWriter.Mode = pkgReport.ModeCI
+	}
+
+	if _, ok := os.LookupEnv("RUN_AS_RUNTIME_PLUGIN"); ok {
+		httpWriter.Mode = pkgReport.ModeRuntime
+	}
+
+	if httpWriter.Mode != "" {
+		if err := httpWriter.Write(report, customHeaders); err != nil {
+			log.Errorf("failed to write results: %w", err)
+		}
+	}
 }
 
 func run(ctx context.Context, opts flag.Options, targetKind TargetKind) (types.Report, error) {

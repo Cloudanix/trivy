@@ -185,8 +185,17 @@ func (c *Client) isNewDB(ctx context.Context, meta metadata.Metadata) bool {
 
 // Download downloads the DB file
 func (c *Client) Download(ctx context.Context, dst string, opt types.RegistryOptions) error {
-	if err := c.downloadDB(ctx, opt, dst); err != nil {
-		return xerrors.Errorf("OCI artifact error: %w", err)
+	const maxRetryCount = 3
+	var downloadErr error
+	for i := 0; i < maxRetryCount; i++ {
+		log.Info(fmt.Sprintf("Downloading DB - Attempt %d", i+1))
+		downloadErr = c.downloadDB(ctx, opt, dst)
+		if downloadErr == nil {
+			break
+		}
+	}
+	if downloadErr != nil {
+		return xerrors.Errorf("OCI artifact error: %w", downloadErr)
 	}
 
 	if err := c.updateDownloadedAt(ctx, dst); err != nil {

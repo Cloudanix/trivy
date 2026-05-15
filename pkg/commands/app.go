@@ -257,6 +257,7 @@ func NewImageCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		flag.NewCacheFlagGroup(),
 		flag.NewDBFlagGroup(),
 		flag.NewImageFlagGroup(), // container image specific flags
+		// flag.NewExportFlagGroup(),
 		flag.NewLicenseFlagGroup(),
 		misconfFlagGroup,
 		flag.NewModuleFlagGroup(),

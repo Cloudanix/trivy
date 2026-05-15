@@ -407,6 +407,7 @@ type Options struct {
 	CacheOptions
 	CleanOptions
 	DBOptions
+	ExportOptions
 	ImageOptions
 	K8sOptions
 	LicenseOptions
