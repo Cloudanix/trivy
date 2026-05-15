@@ -18,6 +18,7 @@ main() {
     RUNTIME_IMAGE_NAME="image-runtime-scanner"
 
     IMAGE_TAG=$(git describe --tags --always --dirty="-dirty" 2>/dev/null || echo "0.0.0-dev")
+    IMAGE_TAG="v${IMAGE_TAG}"
     RUNTIME_IMAGE_TAG="$IMAGE_TAG"
 
     echo "IMAGE_TAG: $IMAGE_TAG"
@@ -28,17 +29,16 @@ main() {
     echo "$CDX_DOCKER_PASSWORD" | docker login -u "$CDX_DOCKER_USERNAME" --password-stdin
 
     echo "Building Image Scanner Binaries"
-    GOOS="linux" GOARCH="amd64" GOEXPERIMENT=jsonv2 go build -o "${IMAGE_NAME}-amd64" "./cmd/$IMAGE_NAME"
-    GOOS="linux" GOARCH="arm64" GOEXPERIMENT=jsonv2 go build -o "${IMAGE_NAME}-arm64" "./cmd/$IMAGE_NAME"
+    GOOS="linux" GOARCH="amd64" GOEXPERIMENT=jsonv2 go build -o "${IMAGE_NAME}" "./cmd/$IMAGE_NAME"
 
-    echo "Build Docker Image to support linux/arm64,linux/amd64 platforms: $IMAGE_NAME:$IMAGE_TAG"
+    echo "Build Docker Image to support linux/arm64 platforms: $IMAGE_OWNER/$IMAGE_NAME:$IMAGE_TAG"
 
-    docker buildx build --push --platform linux/arm64,linux/amd64 -t "$IMAGE_OWNER/$IMAGE_NAME:$IMAGE_TAG" -f "./cmd/$IMAGE_NAME/Dockerfile" . &> "./scripts/image-scanner-$IMAGE_TAG.log"
+    docker build --push --platform linux/amd64 -t "$IMAGE_OWNER/$IMAGE_NAME:$IMAGE_TAG" -f "./cmd/$IMAGE_NAME/Dockerfile" . &> "./scripts/logs/image-scanner-$IMAGE_TAG.log" | tee "./scripts/logs/image-scanner-$IMAGE_TAG.log"
 
     # docker push "$IMAGE_OWNER/$IMAGE_NAME:$IMAGE_TAG"
 
     # echo "Build Docker Image to support linux/amd64 platform: $IMAGE_NAME:latest"
-    # docker build --load --platform linux/amd64 -t "$IMAGE_OWNER/$IMAGE_NAME:latest" -f "./cmd/$IMAGE_NAME/Dockerfile" . &> "./scripts/image-scanner-latest.log"
+    # docker build --load --platform linux/amd64 -t "$IMAGE_OWNER/$IMAGE_NAME:latest" -f "./cmd/$IMAGE_NAME/Dockerfile" . &> "./scripts/logs/image-scanner-latest.log"
 
     # docker push "$IMAGE_OWNER/$IMAGE_NAME:latest"
 
@@ -46,12 +46,12 @@ main() {
     # GOOS="linux" GOARCH="amd64" GOEXPERIMENT=jsonv2 go build -o "$RUNTIME_IMAGE_NAME" "./cmd/$RUNTIME_IMAGE_NAME"
 
     # echo "Build Docker Image to support linux/amd64 platform: $RUNTIME_IMAGE_NAME:$RUNTIME_IMAGE_TAG"
-    # docker build --load --platform linux/amd64 -t "$IMAGE_OWNER/$RUNTIME_IMAGE_NAME:$RUNTIME_IMAGE_TAG" -f "./cmd/$RUNTIME_IMAGE_NAME/Dockerfile" . &> "./scripts/image-runtime-scanner-$RUNTIME_IMAGE_TAG.log"
+    # docker build --load --platform linux/amd64 -t "$IMAGE_OWNER/$RUNTIME_IMAGE_NAME:$RUNTIME_IMAGE_TAG" -f "./cmd/$RUNTIME_IMAGE_NAME/Dockerfile" . &> "./scripts/logs/image-runtime-scanner-$RUNTIME_IMAGE_TAG.log"
 
     # docker push "$IMAGE_OWNER/$RUNTIME_IMAGE_NAME:$RUNTIME_IMAGE_TAG"
 
     # echo "Build Docker Image to support linux/amd64 platform: $RUNTIME_IMAGE_NAME:latest"
-    # docker build --load --platform linux/amd64 -t "$IMAGE_OWNER/$RUNTIME_IMAGE_NAME:latest" -f "./cmd/$RUNTIME_IMAGE_NAME/Dockerfile" . &> "./scripts/image-runtime-scanner-latest.log"
+    # docker build --load --platform linux/amd64 -t "$IMAGE_OWNER/$RUNTIME_IMAGE_NAME:latest" -f "./cmd/$RUNTIME_IMAGE_NAME/Dockerfile" . &> "./scripts/logs/image-runtime-scanner-latest.log"
 
     # docker push "$IMAGE_OWNER/$RUNTIME_IMAGE_NAME:latest"
 
