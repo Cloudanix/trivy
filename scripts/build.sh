@@ -27,10 +27,11 @@ main() {
 
     echo "$CDX_DOCKER_PASSWORD" | docker login -u "$CDX_DOCKER_USERNAME" --password-stdin
 
-    echo "Building Image Scanner Binary"
-    GOOS="linux" GOARCH="amd64" GOEXPERIMENT=jsonv2 go build -o "$IMAGE_NAME" "./cmd/$IMAGE_NAME"
+    echo "Building Image Scanner Binaries"
+    GOOS="linux" GOARCH="amd64" GOEXPERIMENT=jsonv2 go build -o "${IMAGE_NAME}-amd64" "./cmd/$IMAGE_NAME"
+    GOOS="linux" GOARCH="arm64" GOEXPERIMENT=jsonv2 go build -o "${IMAGE_NAME}-arm64" "./cmd/$IMAGE_NAME"
 
-    echo "Build Docker Image to support linux/amd64 platform: $IMAGE_NAME:$IMAGE_TAG"
+    echo "Build Docker Image to support linux/arm64,linux/amd64 platforms: $IMAGE_NAME:$IMAGE_TAG"
 
     docker buildx build --push --platform linux/arm64,linux/amd64 -t "$IMAGE_OWNER/$IMAGE_NAME:$IMAGE_TAG" -f "./cmd/$IMAGE_NAME/Dockerfile" . &> "./scripts/image-scanner-$IMAGE_TAG.log"
 
