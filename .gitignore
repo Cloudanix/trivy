@@ -44,5 +44,5 @@ cmd/trivy/trivy
 # RPM
 *.rpm
 
-cmd/image-scanner/image-scanner
-cmd/image-runtime-scanner/image-runtime-scanner
+image-scanner
+image-runtime-scanner
