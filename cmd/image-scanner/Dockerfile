@@ -4,8 +4,10 @@ RUN apk --no-cache add ca-certificates git
 
 WORKDIR /usr/local/bin
 
-COPY image-scanner /usr/local/bin/image-scanner
-
+COPY image-scanner .
 COPY contrib/*.tpl contrib/
 
-ENTRYPOINT ["image-scanner"]
+RUN chmod +x image-scanner
+
+# Command to run the application when the container starts
+CMD ["./image-scanner"]

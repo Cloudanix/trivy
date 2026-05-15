@@ -10,5 +10,7 @@ COPY contrib/*.tpl contrib/
 # Expose the port on which the application will run
 EXPOSE 8080
 
+RUN chmod +x image-runtime-scanner
+
 # Command to run the application when the container starts
 CMD ["./image-runtime-scanner"]
