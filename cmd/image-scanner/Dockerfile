@@ -1,13 +1,5 @@
-FROM alpine:3.20.0
-
+FROM alpine:3.23.4
 RUN apk --no-cache add ca-certificates git
-
-WORKDIR /usr/local/bin
-
-COPY image-scanner .
+COPY image-scanner /usr/local/bin/image-scanner
 COPY contrib/*.tpl contrib/
-
-RUN chmod +x image-scanner
-
-# Command to run the application when the container starts
-CMD ["./image-scanner"]
+ENTRYPOINT ["image-scanner"]
