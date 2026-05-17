@@ -34,10 +34,10 @@ main() {
 
     docker push "$IMAGE_OWNER/$IMAGE_NAME:$IMAGE_TAG"
 
-    # echo "Build Docker Image to support linux/amd64 platform: $IMAGE_NAME:latest"
-    # docker build --load --platform linux/amd64 -t "$IMAGE_OWNER/$IMAGE_NAME:latest" -f "./cmd/$IMAGE_NAME/Dockerfile" . &> "./scripts/logs/image-scanner-latest.log" | tee "./scripts/logs/image-scanner-latest.log"
+    echo "Build Docker Image to support linux/amd64 platform: $IMAGE_NAME:latest"
+    docker build --load --platform linux/amd64 -t "$IMAGE_OWNER/$IMAGE_NAME:latest" -f "./cmd/$IMAGE_NAME/Dockerfile" . &> "./scripts/logs/image-scanner-latest.log" | tee "./scripts/logs/image-scanner-latest.log"
 
-    # docker push "$IMAGE_OWNER/$IMAGE_NAME:latest"
+    docker push "$IMAGE_OWNER/$IMAGE_NAME:latest"
 
     unset IMAGE_OWNER IMAGE_NAME IMAGE_TAG GOOS GOARCH
 }
