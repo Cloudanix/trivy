@@ -28,6 +28,7 @@ const (
 	HeaderClusterName       = "cdx-cluster-name"
 	HeaderClusterDomain     = "cdx-cluster-domain"
 	HeaderNodeName          = "cdx-node-name"
+	HeaderTemplateType      = "cdx-template-type"
 )
 
 const (
@@ -141,6 +142,7 @@ func (hw HttpWriter) publishReport(report []byte, customHeaders http.Header) err
 
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Add(HeaderAuthorization, fmt.Sprintf("Bearer %s", hw.AuthZToken))
+		req.Header.Add(HeaderTemplateType, "KUBERNETESIMAGESCANNING")
 
 		req.Header.Add(HeaderSessionId, uuid.New().String())
 
