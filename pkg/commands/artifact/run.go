@@ -456,7 +456,7 @@ func PublishReport(report types.Report, imageOpts flag.ImageOptions, customHeade
 
 	if httpWriter.Mode != "" {
 		if err := httpWriter.Write(report, customHeaders); err != nil {
-			log.Errorf("failed to write results: %w", err)
+			log.Errorf("failed to write results: %v", err)
 		}
 	}
 }
