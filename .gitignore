@@ -46,6 +46,7 @@ cmd/trivy/trivy
 
 image-scanner*
 image-runtime-scanner*
+/bin
 
 scripts/logs/*.log
 
