@@ -10,18 +10,20 @@ fi
 
 if [[ "${1-}" =~ ^-*h(elp)?$ ]]; then
     echo 'Usage: ./build.sh [OPTIONS]
-This script generates a Docker image for the image-scanner service.
+This script builds the image-scanner binary and packages it into the image-scanner Docker image.
 
 Options:
   --tag TAG              Image tag (default: git describe, or "0.0.0-dev")
-  --push                 Push images to registry (default: false)
+  --platforms PLATFORMS  Target platform(s), comma-separated (default: linux/amd64)
+  --push                 Push image to registry (default: false)
+  --load                 Load image into the local Docker daemon (default when not pushing)
   --latest               Also tag/push "latest" (default: false)
   -h, --help             Show this help message
 
 Examples:
   ./build.sh --tag v1.2.3
   ./build.sh --tag v1.2.3 --push
-  ./build.sh --tag v1.2.3 --latest --push
+  ./build.sh --platforms linux/amd64,linux/arm64 --push --latest
 '
     exit
 fi
@@ -49,8 +51,16 @@ main() {
 				IMAGE_TAG="$2"
 				shift 2
 				;;
+			--platforms)
+				PLATFORMS="$2"
+				shift 2
+				;;
 			--push)
 				PUSH_IMAGES="true"
+				shift
+				;;
+			--load)
+				PUSH_IMAGES="false"
 				shift
 				;;
 			*)
@@ -61,7 +71,6 @@ main() {
 		esac
 	done
 
-	export IMAGE_TAG
 	FULL_IMAGE_NAME="$REGISTRY/$IMAGE_NAME"
 
 	echo "Configuration:"
@@ -82,37 +91,66 @@ main() {
 	echo "Tidying Go modules..."
 	go mod tidy
 
-	echo "Building Image Scanner binary..."
-	GOOS="linux" GOARCH="amd64" GOEXPERIMENT=jsonv2 go build -o "${IMAGE_NAME}" "./cmd/$IMAGE_NAME"
-
-	BUILD_TAGS=(-t "$FULL_IMAGE_NAME:$IMAGE_TAG")
-	if [[ "$PUSH_LATEST" == "true" ]]; then
-		BUILD_TAGS+=(-t "$FULL_IMAGE_NAME:latest")
-	fi
-
-	# Build and optionally push the main tag
-	echo "Building $FULL_IMAGE_NAME:$IMAGE_TAG..."
-
-	BUILD_CMD=(docker buildx build --platform "$PLATFORMS" --progress=plain)
-	if [[ "$PUSH_IMAGES" == "true" ]]; then
-		BUILD_CMD+=(--push)
-	else
-		BUILD_CMD+=(--load)
-	fi
-
 	mkdir -p ./scripts/logs
 
-	"${BUILD_CMD[@]}" "${BUILD_TAGS[@]}" \
-		-f "./cmd/$IMAGE_NAME/Dockerfile" \
-		--build-arg "SVC_VERSION=$IMAGE_TAG" \
-		--progress=plain \
-		. 2>&1 | tee "./scripts/logs/$IMAGE_NAME-$IMAGE_TAG.log"
+	IFS=',' read -ra PLATFORM_LIST <<< "$PLATFORMS"
+
+	if [[ ${#PLATFORM_LIST[@]} -eq 1 ]]; then
+		build_one "${PLATFORM_LIST[0]}" "$FULL_IMAGE_NAME:$IMAGE_TAG"
+		if [[ "$PUSH_LATEST" == "true" ]]; then
+			build_one "${PLATFORM_LIST[0]}" "$FULL_IMAGE_NAME:latest"
+		fi
+	else
+		# cmd/image-scanner/Dockerfile has no ARG TARGETPLATFORM branch, so one
+		# buildx call can only bake a single arch's binary. Build+push each
+		# platform to its own arch-suffixed tag, then stitch them into one
+		# manifest list with `imagetools create`.
+		if [[ "$PUSH_IMAGES" != "true" ]]; then
+			echo "Multiple platforms require --push (buildx cannot --load a multi-arch manifest)."
+			exit 1
+		fi
+		arch_tags=()
+		for platform in "${PLATFORM_LIST[@]}"; do
+			arch_tag="$FULL_IMAGE_NAME:$IMAGE_TAG-${platform##*/}"
+			build_one "$platform" "$arch_tag"
+			arch_tags+=("$arch_tag")
+		done
+		docker buildx imagetools create -t "$FULL_IMAGE_NAME:$IMAGE_TAG" "${arch_tags[@]}"
+		if [[ "$PUSH_LATEST" == "true" ]]; then
+			docker buildx imagetools create -t "$FULL_IMAGE_NAME:latest" "${arch_tags[@]}"
+		fi
+	fi
 
 	echo "Build completed successfully!"
 	echo "Built image: $FULL_IMAGE_NAME:$IMAGE_TAG"
 	if [[ "$PUSH_LATEST" == "true" ]]; then
 		echo "Built image: $FULL_IMAGE_NAME:latest"
 	fi
+}
+
+# Cross-compile the binary for one platform and buildx-build+tag it.
+build_one() {
+	local platform="$1" tag="$2"
+	local goos="${platform%%/*}"
+	local goarch="${platform##*/}"
+	local ctx_dir
+	ctx_dir="$(mktemp -d)"
+
+	echo "Building $IMAGE_NAME binary for $platform..."
+	GOOS="$goos" GOARCH="$goarch" GOEXPERIMENT=jsonv2 go build -o "$ctx_dir/$IMAGE_NAME" "./cmd/$IMAGE_NAME"
+	cp "cmd/$IMAGE_NAME/Dockerfile" "$ctx_dir/Dockerfile"
+	cp -r contrib "$ctx_dir/contrib"
+
+	local build_cmd=(docker buildx build --platform "$platform" --progress=plain -t "$tag")
+	if [[ "$PUSH_IMAGES" == "true" ]]; then
+		build_cmd+=(--push)
+	else
+		build_cmd+=(--load)
+	fi
+
+	"${build_cmd[@]}" -f "$ctx_dir/Dockerfile" "$ctx_dir" 2>&1 | tee -a "./scripts/logs/$IMAGE_NAME-$IMAGE_TAG.log"
+
+	rm -rf "$ctx_dir"
 }
 
 main "$@"
