@@ -120,7 +120,17 @@ func loadPluginCommands() []*cobra.Command {
 	ctx := context.Background()
 
 	var commands []*cobra.Command
-	plugins, err := plugin.NewManager().LoadAll(ctx)
+	// Avoid creating the plugin directory on every run; nothing to load if it is absent.
+	if !plugin.DirExists() {
+		return nil
+	}
+	manager, err := plugin.NewManager()
+	if err != nil {
+		log.WarnContext(ctx, "Failed to initialize the plugin manager", log.Err(err))
+		return nil
+	}
+	defer manager.Close()
+	plugins, err := manager.LoadAll(ctx)
 	if err != nil {
 		log.DebugContext(ctx, "No plugins loaded")
 		return nil
@@ -752,6 +762,7 @@ func NewConfigCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 
 func NewPluginCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 	var pluginOptions flag.Options
+	var manager *plugin.Manager
 	pluginFlags := &flag.Flags{
 		globalFlags,
 	}
@@ -767,6 +778,16 @@ func NewPluginCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 			pluginOptions, err = pluginFlags.ToOptions(args)
 			if err != nil {
 				return err
+			}
+			manager, err = plugin.NewManager()
+			if err != nil {
+				return xerrors.Errorf("plugin manager error: %w", err)
+			}
+			return nil
+		},
+		PersistentPostRunE: func(_ *cobra.Command, _ []string) error {
+			if manager != nil {
+				return manager.Close()
 			}
 			return nil
 		},
@@ -789,7 +810,7 @@ func NewPluginCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 			DisableFlagsInUseLine: true,
 			Args:                  cobra.ExactArgs(1),
 			RunE: func(cmd *cobra.Command, args []string) error {
-				if _, err := plugin.Install(cmd.Context(), args[0], plugin.Options{Insecure: pluginOptions.Insecure}); err != nil {
+				if _, err := manager.Install(cmd.Context(), args[0], plugin.Options{Insecure: pluginOptions.Insecure}); err != nil {
 					return xerrors.Errorf("plugin install error: %w", err)
 				}
 				return nil
@@ -804,7 +825,7 @@ func NewPluginCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 			SilenceUsage:          true,
 			Args:                  cobra.ExactArgs(1),
 			RunE: func(cmd *cobra.Command, args []string) error {
-				if err := plugin.Uninstall(cmd.Context(), args[0]); err != nil {
+				if err := manager.Uninstall(cmd.Context(), args[0]); err != nil {
 					return xerrors.Errorf("plugin uninstall error: %w", err)
 				}
 				return nil
@@ -819,7 +840,7 @@ func NewPluginCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 			Short:                 "List installed plugin",
 			Args:                  cobra.NoArgs,
 			RunE: func(cmd *cobra.Command, _ []string) error {
-				if err := plugin.List(cmd.Context()); err != nil {
+				if err := manager.List(cmd.Context()); err != nil {
 					return xerrors.Errorf("plugin list display error: %w", err)
 				}
 				return nil
@@ -833,7 +854,7 @@ func NewPluginCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 			SilenceUsage:          true,
 			Args:                  cobra.ExactArgs(1),
 			RunE: func(_ *cobra.Command, args []string) error {
-				if err := plugin.Information(args[0]); err != nil {
+				if err := manager.Information(args[0]); err != nil {
 					return xerrors.Errorf("plugin information display error: %w", err)
 				}
 				return nil
@@ -848,7 +869,7 @@ func NewPluginCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 			Short:                 "Run a plugin on the fly",
 			Args:                  cobra.MinimumNArgs(1),
 			RunE: func(cmd *cobra.Command, args []string) error {
-				return plugin.Run(cmd.Context(), args[0], plugin.Options{
+				return manager.Run(cmd.Context(), args[0], plugin.Options{
 					Args:     args[1:],
 					Insecure: pluginOptions.Insecure,
 				})
@@ -862,7 +883,7 @@ func NewPluginCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 			SilenceUsage:          true,
 			Args:                  cobra.NoArgs,
 			RunE: func(cmd *cobra.Command, _ []string) error {
-				if err := plugin.Update(cmd.Context(), plugin.Options{Insecure: pluginOptions.Insecure}); err != nil {
+				if err := manager.Update(cmd.Context(), plugin.Options{Insecure: pluginOptions.Insecure}); err != nil {
 					return xerrors.Errorf("plugin update error: %w", err)
 				}
 				return nil
@@ -880,7 +901,7 @@ func NewPluginCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 				if len(args) == 1 {
 					keyword = args[0]
 				}
-				return plugin.Search(cmd.Context(), keyword)
+				return manager.Search(cmd.Context(), keyword)
 			},
 		},
 		&cobra.Command{
@@ -890,7 +911,7 @@ func NewPluginCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 			SilenceErrors:         true,
 			SilenceUsage:          true,
 			RunE: func(cmd *cobra.Command, args []string) error {
-				if err := plugin.Upgrade(cmd.Context(), args); err != nil {
+				if err := manager.Upgrade(cmd.Context(), args); err != nil {
 					return xerrors.Errorf("plugin upgrade error: %w", err)
 				}
 				return nil
