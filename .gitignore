@@ -48,3 +48,6 @@ image-scanner*
 image-runtime-scanner*
 
 scripts/logs/*.log
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+graft/
