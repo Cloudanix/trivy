@@ -267,6 +267,7 @@ func NewImageCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		flag.NewCacheFlagGroup(),
 		flag.NewDBFlagGroup(),
 		flag.NewImageFlagGroup(), // container image specific flags
+		// flag.NewExportFlagGroup(),
 		flag.NewLicenseFlagGroup(),
 		misconfFlagGroup,
 		flag.NewModuleFlagGroup(),
@@ -349,6 +350,7 @@ func NewFilesystemCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		globalFlags,
 		cacheFlagGroup,
 		flag.NewDBFlagGroup(),
+		flag.NewExportFlagGroup(),
 		flag.NewLicenseFlagGroup(),
 		flag.NewMisconfFlagGroup(),
 		flag.NewModuleFlagGroup(),
@@ -415,6 +417,7 @@ func NewRootfsCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		globalFlags,
 		cacheFlagGroup,
 		flag.NewDBFlagGroup(),
+		flag.NewExportFlagGroup(),
 		flag.NewLicenseFlagGroup(),
 		flag.NewMisconfFlagGroup(),
 		flag.NewModuleFlagGroup(),

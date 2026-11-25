@@ -67,6 +67,30 @@ var (
 		Default:    "",
 		Usage:      "[EXPERIMENTAL] maximum image size to process, specified in a human-readable format (e.g., '44kB', '17MB'); an error will be returned if the image exceeds this size",
 	}
+	APIEndpointFlag = Flag[string]{
+		Name:       "api-endpoint",
+		ConfigName: "image.api-endpoint",
+		Default:    "DEFAULT_API_ENDPOINT",
+		Usage:      "API Endpoint",
+	}
+	AuthZTokenFlag = Flag[string]{
+		Name:       "authz-token",
+		ConfigName: "export.authz-token",
+		Default:    "DEFAULT_AUTHORIZATION_TOKEN",
+		Usage:      "Authorization Token",
+	}
+	IdentifierFlag = Flag[string]{
+		Name:       "identifier",
+		ConfigName: "export.identifier",
+		Default:    "DEFAULT_IDENTIFIER",
+		Usage:      "Identifier",
+	}
+	EnvFlag = Flag[string]{
+		Name:       "env",
+		ConfigName: "export.env",
+		Default:    "LIVE",
+		Usage:      "Environment",
+	}
 )
 
 type ImageFlagGroup struct {
@@ -78,6 +102,10 @@ type ImageFlagGroup struct {
 	PodmanHost          *Flag[string]
 	ImageSources        *Flag[[]string]
 	MaxImageSize        *Flag[string]
+	APIEndpoint         *Flag[string]
+	AuthZToken          *Flag[string]
+	Identifier          *Flag[string]
+	Env                 *Flag[string]
 }
 
 type ImageOptions struct {
@@ -89,6 +117,10 @@ type ImageOptions struct {
 	PodmanHost          string
 	ImageSources        ftypes.ImageSources
 	MaxImageSize        int64
+	APIEndpoint         string
+	AuthZToken          string
+	Identifier          string
+	Env                 string
 }
 
 func NewImageFlagGroup() *ImageFlagGroup {
@@ -101,6 +133,10 @@ func NewImageFlagGroup() *ImageFlagGroup {
 		PodmanHost:          PodmanHostFlag.Clone(),
 		ImageSources:        SourceFlag.Clone(),
 		MaxImageSize:        MaxImageSize.Clone(),
+		APIEndpoint:         APIEndpointFlag.Clone(),
+		AuthZToken:          AuthZTokenFlag.Clone(),
+		Identifier:          IdentifierFlag.Clone(),
+		Env:                 EnvFlag.Clone(),
 	}
 }
 
@@ -118,6 +154,10 @@ func (f *ImageFlagGroup) Flags() []Flagger {
 		f.PodmanHost,
 		f.ImageSources,
 		f.MaxImageSize,
+		f.APIEndpoint,
+		f.AuthZToken,
+		f.Identifier,
+		f.Env,
 	}
 }
 
@@ -147,6 +187,10 @@ func (f *ImageFlagGroup) ToOptions(opts *Options) error {
 		ImageConfigScanners: xstrings.ToTSlice[types.Scanner](f.ImageConfigScanners.Value()),
 		ScanRemovedPkgs:     f.ScanRemovedPkgs.Value(),
 		Platform:            platform,
+		APIEndpoint:         f.APIEndpoint.Value(),
+		AuthZToken:          f.AuthZToken.Value(),
+		Identifier:          f.Identifier.Value(),
+		Env:                 f.Env.Value(),
 		DockerHost:          f.DockerHost.Value(),
 		PodmanHost:          f.PodmanHost.Value(),
 		ImageSources:        xstrings.ToTSlice[ftypes.ImageSource](f.ImageSources.Value()),

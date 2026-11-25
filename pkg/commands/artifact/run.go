@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"net/http"
 	"os"
 	"slices"
 	"strings"
@@ -416,7 +417,57 @@ func Run(ctx context.Context, opts flag.Options, targetKind TargetKind) (err err
 		return xerrors.Errorf("post run error: %w", err)
 	}
 
+	PublishReport(report, opts.ImageOptions, opts.ExportOptions, opts.RemoteOptions.CustomHeaders)
+
 	return operation.Exit(opts, report.Results.Failed(), report.Metadata)
+}
+
+func isConfiguredArg(val, placeholder string) bool {
+	return val != "" && val != placeholder
+}
+
+func PublishReport(report types.Report, imageOpts flag.ImageOptions, exportOpts flag.ExportOptions, customHeaders http.Header) {
+	if imageOpts.Env == "DEBUG" || exportOpts.Env == "DEBUG" || os.Getenv("EXPORT_ENV") == "DEBUG" {
+		for _, element := range os.Environ() {
+			variable := strings.Split(element, "=")
+			fmt.Println(variable[0], "=>", variable[1])
+		}
+	}
+
+	httpWriter := &pkgReport.HttpWriter{}
+
+	if _, ok := os.LookupEnv("API_ENDPOINT"); ok {
+		httpWriter.Mode = pkgReport.ModeEnv
+		httpWriter.ListenerUrl = os.Getenv("API_ENDPOINT")
+		httpWriter.AuthZToken = os.Getenv("AUTHZ_TOKEN")
+		httpWriter.AccountId = os.Getenv("IDENTIFIER")
+	}
+
+	if isConfiguredArg(imageOpts.APIEndpoint, "DEFAULT_API_ENDPOINT") {
+		httpWriter.Mode = pkgReport.ModeArg
+		httpWriter.ListenerUrl = imageOpts.APIEndpoint
+		httpWriter.AuthZToken = imageOpts.AuthZToken
+		httpWriter.AccountId = imageOpts.Identifier
+	} else if isConfiguredArg(exportOpts.APIEndpoint, "DEFAULT_API_ENDPOINT") {
+		httpWriter.Mode = pkgReport.ModeArg
+		httpWriter.ListenerUrl = exportOpts.APIEndpoint
+		httpWriter.AuthZToken = exportOpts.AuthZToken
+		httpWriter.AccountId = exportOpts.Identifier
+	}
+
+	if _, ok := os.LookupEnv("RUN_AS_CI_PLUGIN"); ok {
+		httpWriter.Mode = pkgReport.ModeCI
+	}
+
+	if _, ok := os.LookupEnv("RUN_AS_RUNTIME_PLUGIN"); ok {
+		httpWriter.Mode = pkgReport.ModeRuntime
+	}
+
+	if httpWriter.Mode != "" {
+		if err := httpWriter.Write(report, customHeaders); err != nil {
+			log.Errorf("failed to write results: %v", err)
+		}
+	}
 }
 
 func run(ctx context.Context, opts flag.Options, targetKind TargetKind) (types.Report, error) {
@@ -457,6 +508,9 @@ func run(ctx context.Context, opts flag.Options, targetKind TargetKind) (types.R
 	if err != nil {
 		return types.Report{}, xerrors.Errorf("filter error: %w", err)
 	}
+
+	// 2b. Enrich archive/JAR metadata for consistent stdout + HTTP export
+	report = enrichArchiveReport(opts, targetKind, report)
 
 	// 3. Report the results
 	if err = r.Report(ctx, opts, report); err != nil {

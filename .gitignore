@@ -43,3 +43,13 @@ cmd/trivy/trivy
 
 # RPM
 *.rpm
+
+/image-scanner*
+/image-runtime-scanner*
+cmd/image-scanner/image-scanner*
+/bin
+
+scripts/logs/*.log
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+graft/
